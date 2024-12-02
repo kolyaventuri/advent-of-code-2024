@@ -24,7 +24,7 @@ main = do
   let sortRight = sort (map last numbers)
 
   let distance = getDistance (sortLeft, sortRight)
-  let part1 = sum distance
+  let part1 = sum (map abs distance)
 
   putStrLn $ "Part 1: " ++ show part1
 
