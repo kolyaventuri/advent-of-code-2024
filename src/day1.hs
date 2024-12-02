@@ -1,7 +1,6 @@
 import Util.Split (splitOn)
 import Data.List (sort)
 import qualified Data.Map as Map
-import Data.Bits (Bits(xor))
 
 main :: IO ()
 
