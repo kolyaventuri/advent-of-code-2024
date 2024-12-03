@@ -7,13 +7,13 @@ pop :: [a] -> [a]
 pop [] = []
 pop (_:xs) = xs
 
-stepThrough :: ([Int], Int) -> Int 
-stepThrough ([], _) = 0 
-stepThrough ([x], _) = 1 
-stepThrough (list, direction)
+stepThroughP1 :: ([Int], Int) -> Int 
+stepThroughP1 ([], _) = 0 
+stepThroughP1 ([x], _) = 1 
+stepThroughP1 (list, direction)
   | diff < 1 || diff > 3 = 0 
   | direction /= (if second > first then 1 else -1) = 0 
-  | otherwise = stepThrough (pop list, direction)
+  | otherwise = stepThroughP1 (pop list, direction)
   where
     first = head list
     second = list !! 1
@@ -22,7 +22,7 @@ stepThrough (list, direction)
 calculateValidity :: [[Int]] -> [Int]
 calculateValidity = map process
   where
-    process arr@(x1:x2:_) = stepThrough (arr, if x2 > x1 then 1 else -1)
+    process arr@(x1:x2:_) = stepThroughP1 (arr, if x2 > x1 then 1 else -1)
     process _ = 0 
 
 main = do
