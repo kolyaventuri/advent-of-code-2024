@@ -28,14 +28,17 @@ readInstructions (input, name) = processChunks input
       | otherwise = processChunks (drop 1 str)
 
 main = do
-  contents <- readFile "input/day3.test.txt"
+  contents <- readFile "input/day3.txt"
   let raw = splitOn "\n" contents
   let lines = filter (not . null) raw
 
   let rawInstructions = map (\line -> readInstructions (line, "mul")) lines
-  let filteredInstructions = map (filter (not . null)) rawInstructions
-  let evaluated = map (map product) filteredInstructions
-  let part1 = sum $ concat evaluated
+  let filteredInstructions = head (map (filter (not . null)) rawInstructions)
+
+  print (length filteredInstructions) 
+  print filteredInstructions
+  let evaluated = map product filteredInstructions
+  let part1 = sum evaluated
 
   putStrLn $ "Part 1: " ++ show part1
 
