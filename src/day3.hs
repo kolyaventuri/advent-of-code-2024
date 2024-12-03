@@ -29,14 +29,10 @@ readInstructions (input, name) = processChunks input
 
 main = do
   contents <- readFile "input/day3.txt"
-  let raw = splitOn "\n" contents
-  let lines = filter (not . null) raw
 
-  let rawInstructions = map (\line -> readInstructions (line, "mul")) lines
-  let filteredInstructions = head (map (filter (not . null)) rawInstructions)
+  let rawInstructions = readInstructions (contents, "mul")
+  let filteredInstructions = filter (not . null) rawInstructions
 
-  print (length filteredInstructions) 
-  print filteredInstructions
   let evaluated = map product filteredInstructions
   let part1 = sum evaluated
 
