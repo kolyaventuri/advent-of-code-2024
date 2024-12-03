@@ -2,6 +2,6 @@ out/
 .history/
 
 input/day*.txt
-!input/day*.test.txt
+!input/day*.test*.txt
 
 node_modules/
