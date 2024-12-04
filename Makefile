@@ -1,7 +1,7 @@
 HS_FILES := $(wildcard src/*.hs)
 OUT_DIR := out
 
-HELPERS := "src/util/Split.hs"
+HELPERS := "src/util/String.hs"
 
 $(shell mkdir -p $(OUT_DIR))
 

@@ -1,4 +1,4 @@
-import Util.Split (splitOn)
+import Util.String (splitOn)
 import Data.List (genericIndex)
 
 main :: IO ()

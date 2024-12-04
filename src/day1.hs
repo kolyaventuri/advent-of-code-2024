@@ -1,4 +1,4 @@
-import Util.Split (splitOn)
+import Util.String (splitOn)
 import Data.List (sort)
 import qualified Data.Map as Map
 

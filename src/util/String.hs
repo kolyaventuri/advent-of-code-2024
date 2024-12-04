@@ -1,4 +1,7 @@
-module Util.Split (splitOn) where
+module Util.String (slice, splitOn) where
+
+slice :: Int -> Int -> String -> String
+slice a b = take (b - a) . drop a
 
 splitOn :: Eq a => [a] -> [a] -> [[a]]
 splitOn delimiter str = go str
