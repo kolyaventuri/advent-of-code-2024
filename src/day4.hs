@@ -36,25 +36,58 @@ leftPad :: String -> Int -> String
 leftPad str count = replicate count '.' ++ str
 
 rightPad:: String -> Int -> String
-rightPad str count = str ++ replicate count '.' 
+rightPad str count = str ++ replicate count '.'
 
 diagonalsRShift :: [String] -> [String]
 diagonalsRShift grid = reverse (zipWith leftPad (reverse grid) [0..])
 
 diagonalsLShift :: [String] -> [String]
-diagonalsLShift grid = zipWith rightPad grid [0..]
+diagonalsLShift grid = zipWith leftPad grid [0..]
 
 findDiags :: [String] -> Int
 findDiags [] = 0
 findDiags grid = left + right
   where
-    right = sum $ map (\line -> processLine (line, 0)) (diagonalsRShift grid) 
-    left = sum $ map (\line -> processLine (line, 0)) (diagonalsLShift grid)
+    right = findVerticals $ diagonalsRShift grid
+    left = findVerticals $ diagonalsLShift grid
 
 searchXMASP1 :: [String] -> Int
 searchMASP1 :: Num a1 => [a2] -> a1
 searchMASP1 [] = 0
 searchXMASP1 grid = findHorizontals grid + findVerticals grid + findDiags grid
+
+isCross :: ([Int], [String]) -> Int
+isCross (_, []) = 0
+isCross (coords, grid)
+  | (grid !! y) !! x /= 'A' = 0 -- Middle
+  | all (\c -> c == "MAS" || c == "SAM") options = 1
+  | otherwise = 0
+  where
+    y = head coords
+    x = coords !! 1
+    topLeft = grid !! (y - 1) !! (x - 1)
+    topRight = grid !! (y - 1) !! (x + 1)
+    bottomLeft = grid !! (y + 1) !! (x - 1)
+    bottomRight = grid !! (y + 1) !! (x + 1)
+    options = [[topLeft] ++ "A" ++ [bottomRight], [topRight] ++ "A" ++ [bottomLeft]]
+
+identifyPossibleCenters :: [String] -> [[Int]]
+identifyPossibleCenters [] = []
+identifyPossibleCenters input = filter (\c -> head c /= 0 && (c !! 1) /= maxY && (c !! 1) /= 0 && head c /= maxX) allAs
+  where
+    allAs = [ [x, y] | (x, row) <- zip [0..] input, (y, char) <- zip [0..] row, char == 'A']
+    maxY = length input - 1
+    maxX = length (head input) - 1
+
+findCrosses :: [String] -> Int
+findCrosses [] = 0
+findCrosses grid = sum $ map (\coord -> isCross (coord, grid)) coords
+  where
+    coords = identifyPossibleCenters grid
+
+searchXMAS2 :: [String] -> Int
+searchXMAS2 [] = 0
+searchXMAS2 grid = findCrosses grid
 
 main = do
   contents <- readFile "input/day4.txt"
@@ -64,3 +97,7 @@ main = do
   let part1 = searchXMASP1 parts
 
   putStrLn ("Part 1: " ++ show part1)
+
+  let part2 = searchXMAS2 parts
+
+  putStrLn ("Part 2: " ++ show part2)
