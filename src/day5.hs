@@ -1,4 +1,5 @@
 import Util.String (splitOn, slice)
+import Data.List (sortBy)
 
 main :: IO ()
 
@@ -10,15 +11,24 @@ stackValid (ordering, stack)
   where
     rules = filter (\x -> head x == head stack) ordering
     stack' = map (:[]) stack
-
-part1ValidOrders :: ([[Int]], [[Int]]) -> [[Int]]
-part1ValidOrders ([], []) = []
-part1ValidOrders ([], _) = []
-part1ValidOrders (ordering, pages) = filter (\page -> stackValid (ordering, reverse page)) pages
+  
+separateValids :: ([[Int]], [[Int]]) -> [[[Int]]]
+separateValids ([], []) = []
+separateValids (ordering, pages)
+  | null valids = []
+  | otherwise = [valids, invalids] 
+  where 
+    valids = filter (\page -> stackValid (ordering, reverse page)) pages 
+    invalids = filter (\page -> not (stackValid (ordering, reverse page))) pages 
 
 part1Mids :: [[Int]] -> [Int]
 part1Mids [] = []
 part1Mids arr = map (\x -> x !! (length x `div` 2)) arr
+
+fixInvalids :: ([[Int]], [Int]) -> [Int]
+fixInvalids (ordering, pages) = sortBy sortPairs pages
+  where
+    sortPairs a b = if stackValid (ordering, [b, a]) then EQ else GT
 
 main = do
   contents <- readFile "input/day5.txt"
@@ -36,8 +46,19 @@ main = do
   -- print ordering
   -- print pages
 
-  let p1Valids = part1ValidOrders (ordering, pages)
-  let p1Mids = part1Mids p1Valids 
+  let separated = separateValids (ordering, pages)
+  let valid = head separated
+  let invalid = last separated
+
+  let p1Mids = part1Mids valid 
   let part1 = sum p1Mids
   
   putStrLn ("Part 1: " ++ show part1)
+
+  putStrLn ""
+
+  let fixed = map (fixInvalids . (ordering,)) invalid
+  let p2Mids = part1Mids fixed
+  let part2 = sum p2Mids
+
+  putStrLn ("Part 2: " ++ show part2)
