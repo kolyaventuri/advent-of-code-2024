@@ -1,44 +1,43 @@
-import Util.String (splitOn)
+import Util.String (splitOn, slice)
 
 main :: IO ()
 
-filterOrdering :: ([[Int]], [Int], [Int]) -> [Int]
-filterOrdering ([], [], _) = []
-filterOrdering ([], _, _) = []
-filterOrdering (ordering, pages, stack)
-  | length stack == length pages = stack
-  | otherwise = filterOrdering (ordering, pages, stack ++ [next])
+stackValid:: ([[Int]], [Int]) -> Bool
+stackValid (ordering, stack)
+  | null stack = True
+  | all (\x -> tail x `notElem` stack') rules = stackValid (ordering, tail stack)
+  | otherwise = False
   where
-    next = pages !! length stack
-    current = if null stack then head pages else pages !! (length stack - 1)
-    rules = all (\x -> head x == next) ordering
+    rules = filter (\x -> head x == head stack) ordering
+    stack' = map (:[]) stack
 
-part1Ordering :: ([[Int]], [[Int]], [Int]) -> [Int]
-part1Ordering ([], [], _) = []
-part1Ordering ([], _, _) = []
-part1Ordering (ordering, pages, stack)
-  | length stack == length pages = stack
-  | otherwise = []
+part1ValidOrders :: ([[Int]], [[Int]]) -> [[Int]]
+part1ValidOrders ([], []) = []
+part1ValidOrders ([], _) = []
+part1ValidOrders (ordering, pages) = filter (\page -> stackValid (ordering, reverse page)) pages
+
+part1Mids :: [[Int]] -> [Int]
+part1Mids [] = []
+part1Mids arr = map (\x -> x !! (length x `div` 2)) arr
 
 main = do
-  contents <- readFile "input/day5.test.txt"
+  contents <- readFile "input/day5.txt"
   let chunks = splitOn "\n\n" contents
 
   let orderingStrings = splitOn "\n" (head chunks)
   let pageStrings = filter (not . null) (splitOn "\n" (chunks !! 1))
 
   let oPairs = map (splitOn "|") orderingStrings
-  let ordering = map (map read :: [String] -> [Int]) oPairs 
+  let ordering = map (map read :: [String] -> [Int]) oPairs
 
   let pGroups = map (splitOn ",") pageStrings
   let pages = map (map read :: [String] -> [Int]) pGroups
 
-  print ordering
-  print pages 
+  -- print ordering
+  -- print pages
 
-  let part1 = part1Ordering (ordering, pages, [])
-
-  putStrLn ""
-  print (filterOrdering (ordering, head pages, []))
-
-  putStrLn $ "Part 1: " ++ show part1
+  let p1Valids = part1ValidOrders (ordering, pages)
+  let p1Mids = part1Mids p1Valids 
+  let part1 = sum p1Mids
+  
+  putStrLn ("Part 1: " ++ show part1)
