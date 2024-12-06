@@ -16,7 +16,7 @@ findStartingPoint (lines, (x, y))
 printMap :: ([String], [(Int, Int)], (Int, Int), String) -> String
 printMap (lines, steps, (x, y), curr)
   | x >= length lines = printMap (lines, steps, (0, y + 1), curr ++ "\n")
-  | y >= length (lines !! x) = curr 
+  | y >= length (lines !! x) = curr
   | any (\(x',y') -> x == x' && y == y') steps = printMap (lines, steps, (x + 1, y), curr ++ [hitChar])
   | otherwise = printMap (lines, steps, (x + 1, y), curr ++ [currentChar])
   where
@@ -24,34 +24,45 @@ printMap (lines, steps, (x, y), curr)
     hitChar = if (x,y) == head steps then 'O' else 'X'
 
 
+getNextValidDirection :: ([String], (Int, Int), (Int, Int)) -> (Int, Int)
+getNextValidDirection (lines, (x, y), (dx, dy))
+  | not hitBarrel = (dx, dy)
+  | dx == 0 && dy == -1 = getNextValidDirection (lines, (x, y), (1, 0)) -- Up -> Right
+  | dx == 1 && dy == 0 = getNextValidDirection (lines, (x, y), (0, 1)) -- Right -> Down
+  | dx == 0 && dy == 1 = getNextValidDirection (lines, (x, y), (-1, 0)) -- Down -> Left
+  | dx == -1 && dy == 0 = getNextValidDirection (lines, (x, y), (0, -1)) -- Left -> Up 
+  | otherwise = error "Invalid direction"
+  where 
+    checkX = x + dx
+    checkY = y + dy
+    _maxX = length lines - 1
+    _maxY = length (head lines) - 1
+    hitBarrel = not ((checkX < 0 || checkX > _maxX) || (checkY < 0 || checkY > _maxY)) && ((lines !! checkY) !! checkX == '#')
+
 -- Directions:
 -- (0, -1) - up
 -- (1, 0) - right
 -- (0, 1) - down
 -- (-1, 0) - left
-walkMap :: ([String], (Int, Int), (Int, Int), [(Int, Int)]) -> [(Int, Int)] 
+walkMap :: ([String], (Int, Int), (Int, Int), [(Int, Int)]) -> [(Int, Int)]
 walkMap ([], _, _, _) = error "No map"
 walkMap (lines, (x, y), direction, steps)
   -- | trace ("Moving " ++ show direction ++ " -- Step " ++ show (length steps) ++ "\n" ++ printMap(lines, steps, (0,0), "")) False = undefined
+  -- | trace ("At " ++ show (x, y) ++ ", Moving " ++ show direction ++ " -- Step " ++ show (length steps)) False = undefined
+  -- | trace ("  next: " ++ show (nextX, nextY)) False = undefined
+  | (lines !! y) !! x == '#' = error "I'm standing on a barrel. Something is wrong."
   | y < 0 || x < 0 = steps -- Base case, we made it out
   | nextY < 0 || nextX < 0 = steps -- Base case, we made it out
-  | y >= length lines - 1 = steps -- Base case, we made it out
-  | x >= length (lines !! y) - 1 = steps -- Base case, we made it out
-  | hitBarrel = walkMap (lines, (nextX, nextY), nextDirection, (nextX, nextY) : steps)
-  | otherwise = walkMap (lines, (nextX, nextY), nextDirection, (nextX, nextY) :steps)
+  | nextY > length lines - 1 = steps -- Base case, we made it out
+  | nextX > length (lines !! y) - 1 = steps -- Base case, we made it out
+  | otherwise = walkMap (lines, (nextX, nextY), nextDirection, (nextX, nextY) : steps)
   where
-    checkX = if (x + fst direction) >= 0 && (x + fst direction) < length (lines !! y) then x + fst direction else x
-    checkY = if (y + snd direction) >= 0 && (y + snd direction) < length lines then y + snd direction else y
-    bY = lines !! checkY
-    bX = (lines !! checkY) !! checkX
-    hitBarrel = bX == '#'
-    nextDirection
-      | not hitBarrel = direction
-      | fst direction == 0 && snd direction == -1 = (1, 0) -- Up -> Right
-      | fst direction == 1 && snd direction == 0 = (0, 1) -- Right -> Down
-      | fst direction == 0 && snd direction == 1 = (-1, 0) -- Down -> Left
-      | fst direction == -1 && snd direction == 0 = (0, -1) -- Left -> Up
-      | otherwise = error "Invalid direction"
+    checkX = x + fst direction
+    checkY = y + snd direction
+    _maxX = length lines - 1
+    _maxY = length (head lines) - 1
+    hitBarrel = not ((checkX < 0 || checkX > _maxX) || (checkY < 0 || checkY > _maxY)) && ((lines !! checkY) !! checkX == '#')
+    nextDirection = getNextValidDirection (lines, (x, y), direction)
     nextX = x + fst nextDirection
     nextY = y + snd nextDirection
 
@@ -63,8 +74,8 @@ main = do
   let startingPoint = findStartingPoint (lines, (0, 0))
   print startingPoint
 
-  let p1Steps = walkMap (lines, startingPoint, (0, -1), [])
+  let p1Steps = walkMap (lines, startingPoint, (0, -1), [startingPoint])
   let p1Uniq = nub p1Steps
-  let part1 = length p1Uniq 
-  
+  let part1 = length p1Uniq
+
   putStrLn ("Part 1: " ++ show part1)
