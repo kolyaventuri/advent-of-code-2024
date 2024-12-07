@@ -32,12 +32,27 @@ getNextValidDirection (lines, (x, y), (dx, dy))
   | dx == 0 && dy == 1 = getNextValidDirection (lines, (x, y), (-1, 0)) -- Down -> Left
   | dx == -1 && dy == 0 = getNextValidDirection (lines, (x, y), (0, -1)) -- Left -> Up 
   | otherwise = error "Invalid direction"
-  where 
+  where
     checkX = x + dx
     checkY = y + dy
     _maxX = length lines - 1
     _maxY = length (head lines) - 1
     hitBarrel = not ((checkX < 0 || checkX > _maxX) || (checkY < 0 || checkY > _maxY)) && ((lines !! checkY) !! checkX == '#')
+
+getNextValidDirectionBlocked :: ([String], (Int, Int), (Int, Int), (Int, Int)) -> (Int, Int)
+getNextValidDirectionBlocked (lines, (x, y), blocked, (dx, dy))
+  | not hitBarrel = (dx, dy)
+  | dx == 0 && dy == -1 = getNextValidDirection (lines, (x, y), (1, 0)) -- Up -> Right
+  | dx == 1 && dy == 0 = getNextValidDirection (lines, (x, y), (0, 1)) -- Right -> Down
+  | dx == 0 && dy == 1 = getNextValidDirection (lines, (x, y), (-1, 0)) -- Down -> Left
+  | dx == -1 && dy == 0 = getNextValidDirection (lines, (x, y), (0, -1)) -- Left -> Up 
+  | otherwise = error "Invalid direction"
+  where
+    checkX = x + dx
+    checkY = y + dy
+    _maxX = length lines - 1
+    _maxY = length (head lines) - 1
+    hitBarrel = not ((checkX < 0 || checkX > _maxX) || (checkY < 0 || checkY > _maxY)) && ((lines !! checkY) !! checkX == '#') || (checkX == fst blocked && checkY == snd blocked)
 
 -- Directions:
 -- (0, -1) - up
@@ -61,13 +76,53 @@ walkMap (lines, (x, y), direction, steps)
     checkY = y + snd direction
     _maxX = length lines - 1
     _maxY = length (head lines) - 1
-    hitBarrel = not ((checkX < 0 || checkX > _maxX) || (checkY < 0 || checkY > _maxY)) && ((lines !! checkY) !! checkX == '#')
     nextDirection = getNextValidDirection (lines, (x, y), direction)
     nextX = x + fst nextDirection
     nextY = y + snd nextDirection
 
+createsLoop :: ([String], (Int, Int), (Int, Int), (Int, Int), [(Int, Int, (Int, Int))]) -> Bool
+createsLoop ([], _, _, _, _) = error "No map"
+createsLoop (lines, (x, y), blocked, direction, steps)
+  -- | trace ("Moving " ++ show direction ++ " -- Step " ++ show (length steps) ++ "\n" ++ printMap (lines, map (\(x,y,_) -> (x,y)) steps, (0,0), "")) False = undefined
+  -- | trace ("At " ++ show (x, y) ++ ", Moving " ++ show direction ++ " -- Step " ++ show (length steps)) False = undefined
+  -- | trace (" x=" ++ show x ++ " y=" ++ show y ++ " dX=" ++ show dX ++ " dY=" ++ show dY ++ "/" ++ show steps ) False = undefined
+  | (lines !! y) !! x == '#' = error "I'm standing on a barrel. Something is wrong."
+  | y < 0 || x < 0 = False --Base case, we made it out
+  | nextY < 0 || nextX < 0 = False -- Base case, we made it out
+  | nextY > length lines - 1 = False -- Base case, we made it out
+  | nextX > length (lines !! y) - 1 = False -- Base case, we made it out
+  | testSpot = True
+  | otherwise = createsLoop (lines, (nextX, nextY), blocked, nextDirection, (x, y, direction) : steps)
+  where
+    checkX = x + fst direction
+    checkY = y + snd direction
+    _maxX = length lines - 1
+    _maxY = length (head lines) - 1
+    nextDirection = getNextValidDirectionBlocked (lines, (x, y), blocked, direction)
+    dX = fst nextDirection
+    dY = snd nextDirection
+    nextX = x + dX
+    nextY = y + dY
+    testSpot
+      | valid && trace (printMap (lines, map (\(x,y,_) -> (x,y)) steps, (0,0), "")) False = undefined
+      | otherwise = valid
+      where
+        valid = any (\(x', y', (dX', dY')) -> x == x' && y == y' && fst direction == dX' && snd direction == dY') steps
+
+
+checkPossibleLoops :: ([String], (Int, Int), [(Int, Int)]) -> Int
+checkPossibleLoops (lines, (x, y), blocked) = sum results
+  where
+    doCheckLoop :: (Int, (Int, Int)) -> Int
+    doCheckLoop (id, point)
+      -- | trace ("Checking loop " ++ show (id + 1) ++ " of " ++ show (length blocked) ++ " at " ++ show point) False = undefined
+      | createsLoop (lines, (x, y), point, (0, -1), []) = 1
+      | otherwise = 0
+    withIds = zip [0..] blocked
+    results = map doCheckLoop withIds
+
 main = do
-  contents <- readFile "input/day6.txt"
+  contents <- readFile "input/day6.test.txt"
   let chunks = splitOn "\n" contents
   let lines = filter (not . null) chunks
 
@@ -79,3 +134,9 @@ main = do
   let part1 = length p1Uniq
 
   putStrLn ("Part 1: " ++ show part1)
+
+  putStrLn ""
+
+  let p2BlockedRoutes = checkPossibleLoops (lines, startingPoint, p1Uniq)
+
+  putStrLn ("Part 2: " ++ show p2BlockedRoutes)
